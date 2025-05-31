@@ -447,8 +447,31 @@ function ESP:Stop()
 end
 
 -- Toggle ESP
+local oldToggle = ESP.Toggle
 function ESP:Toggle()
     self.Enabled = not self.Enabled
+    if not self.Enabled then
+        -- Hide all ESP elements when disabled
+        for _, esp in pairs(self.Objects) do
+            self:HideESP(esp)
+        end
+    end
+end
+
+-- Add name toggle function
+function ESP:ToggleName()
+    self.ShowName = not self.ShowName
+    -- Update all existing ESP objects
+    for _, esp in pairs(self.Objects) do
+        if esp.Name then
+            esp.Name.Visible = self.ShowName and self.Enabled
+        end
+    end
+end
+
+-- Add distance toggle function
+function ESP:ToggleDistance()
+    self.ShowDistance = not self.ShowDistance
 end
 
 -- Toggle corner box style
