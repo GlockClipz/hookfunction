@@ -401,7 +401,7 @@ function ESP:Init()
     local testDraw = Drawing.new("Line")
     if not testDraw then
         warn("Failed to create test drawing! ESP will not work!")
-        return
+        return false
     end
     testDraw:Remove()
     
@@ -410,7 +410,7 @@ function ESP:Init()
     self.Enabled = true
     
     -- Connect player events with error handling
-    pcall(function()
+    local success = pcall(function()
         self.Players.PlayerAdded:Connect(function(player)
             self:CreateESP(player)
         end)
@@ -425,21 +425,38 @@ function ESP:Init()
         end
     end)
     
+    if not success then
+        warn("Failed to connect player events!")
+        return false
+    end
+    
     -- Start update loop with error handling
-    pcall(function()
-        self.RunService.RenderStepped:Connect(function()
+    success = pcall(function()
+        self.UpdateConnection = self.RunService.RenderStepped:Connect(function()
             self:Update()
         end)
     end)
     
+    if not success then
+        warn("Failed to start update loop!")
+        return false
+    end
+    
     -- Debug print to confirm initialization
     print("ESP Initialized Successfully!")
+    return true
 end
 
 -- Stop ESP
 function ESP:Stop()
     self.Enabled = false
     self.Started = false
+    
+    -- Disconnect update loop if it exists
+    if self.UpdateConnection then
+        self.UpdateConnection:Disconnect()
+        self.UpdateConnection = nil
+    end
     
     -- Remove all ESP objects
     for player in pairs(self.Objects) do
