@@ -1,7 +1,6 @@
 # Complete ESP Setup Guide
 
 ## Step 1: Initial Setup
-First, create a new script file called `esp_setup.lua` with this basic loader:
 
 ```lua
 -- Basic ESP Loader
