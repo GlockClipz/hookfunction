@@ -15,13 +15,16 @@ local ESP = {
     HealthBarOffset = 4,
     ShowDistance = true,
     ShowName = true,
+    ShowBox = true,
     MaxDistance = 1000,
     CornerBoxEnabled = true,
     CornerSize = 5,
     Objects = {},
     Players = game:GetService("Players"),
     RunService = game:GetService("RunService"),
-    Started = false
+    Started = false,
+    ShowHealthBar = true,
+    ShowTool = true
 }
 
 local HEALTH_COLORS = {
@@ -328,23 +331,23 @@ function ESP:Update()
                     
                     esp.HealthBarOutline.Size = Vector2.new(ESP.HealthBarWidth, healthBarHeight)
                     esp.HealthBarOutline.Position = healthBarPos
-                    esp.HealthBarOutline.Visible = true
+                    esp.HealthBarOutline.Visible = ESP.ShowHealthBar
                     
                     esp.HealthBarFill.Size = Vector2.new(ESP.HealthBarWidth, healthBarHeight * healthPercent)
                     esp.HealthBarFill.Position = Vector2.new(healthBarPos.X, healthBarPos.Y + healthBarHeight * (1 - healthPercent))
                     esp.HealthBarFill.Color = ESP:GetHealthColor(healthPercent)
-                    esp.HealthBarFill.Visible = true
+                    esp.HealthBarFill.Visible = ESP.ShowHealthBar
                     
                     local healthText = string.format("%d", math.floor(humanoid.Health + 0.5))
                     esp.HealthText.Text = healthText
                     esp.HealthText.Position = Vector2.new(healthBarPos.X - esp.HealthText.TextBounds.X - 2, 
                         healthBarPos.Y + healthBarHeight - esp.HealthText.TextBounds.Y)
-                    esp.HealthText.Visible = true
+                    esp.HealthText.Visible = ESP.ShowHealthBar
                     
                     local toolName = ESP:GetEquippedTool(character)
                     esp.ToolText.Text = toolName
                     esp.ToolText.Position = Vector2.new((minX + maxX) / 2, maxY + 2)
-                    esp.ToolText.Visible = true
+                    esp.ToolText.Visible = ESP.ShowTool
                     
                     esp.Name.Position = Vector2.new((minX + maxX) / 2, minY - esp.Name.TextBounds.Y - 2)
                     esp.Name.Size = ESP.TextSize
@@ -352,7 +355,42 @@ function ESP:Update()
                     if ESP.ShowDistance then
                         esp.Name.Text = string.format("%s\n[%d studs]", player.Name, math.floor(distance))
                     end
-                    esp.Name.Visible = true
+                    esp.Name.Visible = ESP.ShowName and ESP.Enabled and esp.Enabled
+
+                    -- Update box visibility
+                    if ESP.ShowBox and ESP.Enabled and esp.Enabled then
+                        if ESP.CornerBoxEnabled then
+                            for _, line in pairs({
+                                esp.TopLeftV, esp.TopLeftH,
+                                esp.TopRightV, esp.TopRightH,
+                                esp.BottomLeftV, esp.BottomLeftH,
+                                esp.BottomRightV, esp.BottomRightH
+                            }) do
+                                line.Visible = true
+                            end
+                            esp.Box.Visible = false
+                        else
+                            for _, line in pairs({
+                                esp.TopLeftV, esp.TopLeftH,
+                                esp.TopRightV, esp.TopRightH,
+                                esp.BottomLeftV, esp.BottomLeftH,
+                                esp.BottomRightV, esp.BottomRightH
+                            }) do
+                                line.Visible = false
+                            end
+                            esp.Box.Visible = true
+                        end
+                    else
+                        esp.Box.Visible = false
+                        for _, line in pairs({
+                            esp.TopLeftV, esp.TopLeftH,
+                            esp.TopRightV, esp.TopRightH,
+                            esp.BottomLeftV, esp.BottomLeftH,
+                            esp.BottomRightV, esp.BottomRightH
+                        }) do
+                            line.Visible = false
+                        end
+                    end
                 else
                     ESP:HideESP(esp)
                 end
@@ -408,7 +446,6 @@ function ESP:Init()
         return false
     end
     
-    print("ESP Initialized Successfully!")
     return true
 end
 
@@ -429,8 +466,8 @@ end
 
 function ESP:Toggle()
     self.Enabled = not self.Enabled
-    if not self.Enabled then
-        for _, esp in pairs(self.Objects) do
+    for _, esp in pairs(self.Objects) do
+        if not self.Enabled then
             self:HideESP(esp)
         end
     end
@@ -438,19 +475,83 @@ end
 
 function ESP:ToggleName()
     self.ShowName = not self.ShowName
-    for _, esp in pairs(self.Objects) do
-        if esp.Name then
-            esp.Name.Visible = self.ShowName and self.Enabled
-        end
-    end
 end
 
 function ESP:ToggleDistance()
     self.ShowDistance = not self.ShowDistance
+    -- Distance is handled in the Update function
+end
+
+function ESP:ToggleBox()
+    self.ShowBox = not self.ShowBox
+    -- Immediately update all existing ESP objects
+    for _, esp in pairs(self.Objects) do
+        if not self.ShowBox then
+            esp.Box.Visible = false
+            esp.TopLeftV.Visible = false
+            esp.TopLeftH.Visible = false
+            esp.TopRightV.Visible = false
+            esp.TopRightH.Visible = false
+            esp.BottomLeftV.Visible = false
+            esp.BottomLeftH.Visible = false
+            esp.BottomRightV.Visible = false
+            esp.BottomRightH.Visible = false
+        end
+    end
 end
 
 function ESP:ToggleCornerBox()
+    if not self.ShowBox then -- If box is disabled, enable it first
+        self.ShowBox = true
+    end
     self.CornerBoxEnabled = not self.CornerBoxEnabled
+    -- Immediately update all existing ESP objects
+    for _, esp in pairs(self.Objects) do
+        if self.ShowBox and ESP.Enabled and esp.Enabled then
+            if self.CornerBoxEnabled then
+                esp.Box.Visible = false
+                esp.TopLeftV.Visible = true
+                esp.TopLeftH.Visible = true
+                esp.TopRightV.Visible = true
+                esp.TopRightH.Visible = true
+                esp.BottomLeftV.Visible = true
+                esp.BottomLeftH.Visible = true
+                esp.BottomRightV.Visible = true
+                esp.BottomRightH.Visible = true
+            else
+                esp.Box.Visible = true
+                esp.TopLeftV.Visible = false
+                esp.TopLeftH.Visible = false
+                esp.TopRightV.Visible = false
+                esp.TopRightH.Visible = false
+                esp.BottomLeftV.Visible = false
+                esp.BottomLeftH.Visible = false
+                esp.BottomRightV.Visible = false
+                esp.BottomRightH.Visible = false
+            end
+        end
+    end
+end
+
+-- Add new functions to toggle health bar and tool text
+function ESP:ToggleHealthBar()
+    self.ShowHealthBar = not self.ShowHealthBar
+    for _, esp in pairs(self.Objects) do
+        if esp.Enabled and self.Enabled then
+            esp.HealthBarOutline.Visible = self.ShowHealthBar
+            esp.HealthBarFill.Visible = self.ShowHealthBar
+            esp.HealthText.Visible = self.ShowHealthBar
+        end
+    end
+end
+
+function ESP:ToggleTool()
+    self.ShowTool = not self.ShowTool
+    for _, esp in pairs(self.Objects) do
+        if esp.Enabled and self.Enabled then
+            esp.ToolText.Visible = self.ShowTool
+        end
+    end
 end
 
 function ESP:SetColor(color)
@@ -472,8 +573,14 @@ if success then
     ESP.BoxThickness = 2
     ESP.TextSize = 14
     ESP.Enabled = false
+    ESP.ShowHealthBar = false
+    ESP.ShowTool = false
+    ESP.ShowName = false
+    ESP.ShowDistance = false
+    ESP.ShowBox = false
+    ESP.CornerBoxEnabled = false  -- Start with regular box
+
     
-    print("ESP initialized successfully!")
 else
     warn("ESP failed to initialize!")
 end
