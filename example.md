@@ -1,5 +1,3 @@
-Absolutely! Here’s the polished and formatted README.md **in full**:
-
 ````markdown
 # 🎯 ESP Documentation
 
