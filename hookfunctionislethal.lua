@@ -14,6 +14,7 @@ local ESP = {
     HealthBarWidth = 2.5,
     HealthBarOffset = 4,
     ShowDistance = true,
+    ShowName = true,
     MaxDistance = 1000,
     CornerBoxEnabled = true,
     CornerSize = 5,
@@ -447,7 +448,6 @@ function ESP:Stop()
 end
 
 -- Toggle ESP
-local oldToggle = ESP.Toggle
 function ESP:Toggle()
     self.Enabled = not self.Enabled
     if not self.Enabled then
@@ -561,4 +561,8 @@ if ESP then
     -- ESP:Stop()  -- Stop ESP completely
 end
 
+-- Initialize ESP immediately when loaded through loadstring
+ESP:Init()
+
+-- Return the ESP object
 return ESP 
