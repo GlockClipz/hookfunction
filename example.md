@@ -10,7 +10,7 @@ A lightweight, customizable ESP (Extra Sensory Perception) script for Roblox.
 ## 📥 Installation
 
 ```lua
-local ESP = loadstring(game:HttpGet("https://raw.githubusercontent.com/GlockClipz/hookfunction/refs/heads/main/libary.lua"))()
+local ESP = loadstring(game:HttpGet("https://raw.githubusercontent.com/hooklua/hookfunction/refs/heads/main/libary.lua"))()
 ````
 
 ---
