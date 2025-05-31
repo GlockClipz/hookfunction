@@ -27,7 +27,7 @@ local HEALTH_COLORS = {
 }
 
 -- Function to get health color based on percentage
-local function GetHealthColor(percentage)
+function ESP:GetHealthColor(percentage)
     local lastColor = HEALTH_COLORS[0.25]
     for threshold, color in pairs(HEALTH_COLORS) do
         if percentage >= threshold then
@@ -38,7 +38,8 @@ local function GetHealthColor(percentage)
 end
 
 -- Function to hide ESP elements
-local function HideESP(esp)
+function ESP:HideESP(esp)
+    if not esp then return end
     esp.Name.Visible = false
     esp.Box.Visible = false
     esp.TopLeftV.Visible = false
@@ -56,7 +57,7 @@ local function HideESP(esp)
 end
 
 -- Function to create ESP for a player
-local function CreateESP(player)
+function ESP:CreateESP(player)
     if player == ESP.Players.LocalPlayer then return end
     
     local esp = {
@@ -145,7 +146,7 @@ local function CreateESP(player)
         if humanoid then
             humanoid.Died:Connect(function()
                 esp.Enabled = false
-                HideESP(esp)
+                ESP:HideESP(esp)
             end)
         end
     end
@@ -162,7 +163,7 @@ local function CreateESP(player)
 end
 
 -- Function to remove ESP
-local function RemoveESP(player)
+function ESP:RemoveESP(player)
     local esp = ESP.Objects[player]
     if esp then
         esp.Name:Remove()
@@ -184,7 +185,7 @@ local function RemoveESP(player)
 end
 
 -- Function to get bounding box
-local function GetBoundingBox(character)
+function ESP:GetBoundingBox(character)
     local minX, minY, minZ = math.huge, math.huge, math.huge
     local maxX, maxY, maxZ = -math.huge, -math.huge, -math.huge
     
@@ -223,7 +224,7 @@ local function GetBoundingBox(character)
 end
 
 -- Function to get character's equipped tool
-local function GetEquippedTool(character)
+function ESP:GetEquippedTool(character)
     for _, child in pairs(character:GetChildren()) do
         if child:IsA("Tool") then
             return child.Name
@@ -233,7 +234,9 @@ local function GetEquippedTool(character)
 end
 
 -- Update ESP positions and visibility
-local function UpdateESP()
+function ESP:Update()
+    if not ESP.Enabled then return end
+    
     local camera = workspace.CurrentCamera
     
     for player, esp in pairs(ESP.Objects) do
@@ -243,7 +246,7 @@ local function UpdateESP()
             local humanoid = character:FindFirstChild("Humanoid")
             
             if hrp and humanoid and humanoid.Health > 0 then
-                local min, max = GetBoundingBox(character)
+                local min, max = ESP:GetBoundingBox(character)
                 local rootPos = hrp.Position
                 
                 -- Get corners in world space
@@ -348,7 +351,7 @@ local function UpdateESP()
                     
                     esp.HealthBarFill.Size = Vector2.new(ESP.HealthBarWidth, healthBarHeight * healthPercent)
                     esp.HealthBarFill.Position = Vector2.new(healthBarPos.X, healthBarPos.Y + healthBarHeight * (1 - healthPercent))
-                    esp.HealthBarFill.Color = GetHealthColor(healthPercent)
+                    esp.HealthBarFill.Color = ESP:GetHealthColor(healthPercent)
                     esp.HealthBarFill.Visible = true
                     
                     -- Update health text
@@ -359,7 +362,7 @@ local function UpdateESP()
                     esp.HealthText.Visible = true
                     
                     -- Update tool text
-                    local toolName = GetEquippedTool(character)
+                    local toolName = ESP:GetEquippedTool(character)
                     esp.ToolText.Text = toolName
                     esp.ToolText.Position = Vector2.new((minX + maxX) / 2, maxY + 2)
                     esp.ToolText.Visible = true
@@ -373,13 +376,13 @@ local function UpdateESP()
                     end
                     esp.Name.Visible = true
                 else
-                    HideESP(esp)
+                    ESP:HideESP(esp)
                 end
             else
-                HideESP(esp)
+                ESP:HideESP(esp)
             end
         else
-            HideESP(esp)
+            ESP:HideESP(esp)
         end
     end
 end
@@ -410,6 +413,9 @@ function ESP:Init()
     self.RunService.RenderStepped:Connect(function()
         self:Update()
     end)
+    
+    -- Debug print to confirm initialization
+    print("ESP Initialized")
 end
 
 -- Stop ESP
@@ -420,286 +426,6 @@ function ESP:Stop()
     -- Remove all ESP objects
     for player in pairs(self.Objects) do
         self:RemoveESP(player)
-    end
-end
-
--- Create ESP (modified to be a method)
-function ESP:CreateESP(player)
-    if player == self.Players.LocalPlayer then return end
-    
-    local esp = {
-        Name = Drawing.new("Text"),
-        Box = Drawing.new("Square"),
-        TopLeftV = Drawing.new("Line"),
-        TopLeftH = Drawing.new("Line"),
-        TopRightV = Drawing.new("Line"),
-        TopRightH = Drawing.new("Line"),
-        BottomLeftV = Drawing.new("Line"),
-        BottomLeftH = Drawing.new("Line"),
-        BottomRightV = Drawing.new("Line"),
-        BottomRightH = Drawing.new("Line"),
-        HealthBarOutline = Drawing.new("Square"),
-        HealthBarFill = Drawing.new("Square"),
-        HealthText = Drawing.new("Text"),
-        ToolText = Drawing.new("Text"),
-        Player = player,
-        Enabled = true
-    }
-    
-    -- Configure corner lines
-    local cornerProps = {
-        Thickness = self.BoxThickness,
-        Color = self.BoxColor,
-        Transparency = 1,
-    }
-    
-    for _, line in pairs({
-        esp.TopLeftV, esp.TopLeftH,
-        esp.TopRightV, esp.TopRightH,
-        esp.BottomLeftV, esp.BottomLeftH,
-        esp.BottomRightV, esp.BottomRightH
-    }) do
-        for prop, value in pairs(cornerProps) do
-            line[prop] = value
-        end
-    end
-    
-    -- Configure ESP text properties
-    esp.Name.Text = player.Name
-    esp.Name.Size = self.TextSize
-    esp.Name.Center = true
-    esp.Name.Outline = true
-    esp.Name.OutlineColor = self.TextOutlineColor
-    esp.Name.Color = self.TextColor
-    esp.Name.Font = 2 -- Plex font
-    
-    -- Configure ESP box properties
-    esp.Box.Thickness = self.BoxThickness
-    esp.Box.Color = self.BoxColor
-    esp.Box.Filled = false
-    esp.Box.Transparency = 1
-    
-    -- Configure health bar properties
-    esp.HealthBarOutline.Thickness = 1
-    esp.HealthBarOutline.Filled = false
-    esp.HealthBarOutline.Color = Color3.new(0, 0, 0)
-    esp.HealthBarOutline.Transparency = 1
-    
-    esp.HealthBarFill.Thickness = 1
-    esp.HealthBarFill.Filled = true
-    esp.HealthBarFill.Transparency = 1
-    
-    -- Configure health text properties
-    esp.HealthText.Size = self.TextSize - 2
-    esp.HealthText.Center = false
-    esp.HealthText.Outline = true
-    esp.HealthText.OutlineColor = self.TextOutlineColor
-    esp.HealthText.Color = self.TextColor
-    esp.HealthText.Font = 2
-    
-    -- Configure tool text properties
-    esp.ToolText.Size = self.TextSize - 2
-    esp.ToolText.Center = true
-    esp.ToolText.Outline = true
-    esp.ToolText.OutlineColor = self.TextOutlineColor
-    esp.ToolText.Color = self.TextColor
-    esp.ToolText.Font = 2
-    
-    -- Connect death handling
-    local function onCharacterAdded(character)
-        esp.Enabled = true
-        local humanoid = character:WaitForChild("Humanoid", 5)
-        if humanoid then
-            humanoid.Died:Connect(function()
-                esp.Enabled = false
-                HideESP(esp)
-            end)
-        end
-    end
-    
-    -- Connect to existing character
-    if player.Character then
-        onCharacterAdded(player.Character)
-    end
-    
-    -- Connect to future characters
-    player.CharacterAdded:Connect(onCharacterAdded)
-    
-    self.Objects[player] = esp
-end
-
--- Remove ESP (modified to be a method)
-function ESP:RemoveESP(player)
-    local esp = self.Objects[player]
-    if esp then
-        esp.Name:Remove()
-        esp.Box:Remove()
-        esp.TopLeftV:Remove()
-        esp.TopLeftH:Remove()
-        esp.TopRightV:Remove()
-        esp.TopRightH:Remove()
-        esp.BottomLeftV:Remove()
-        esp.BottomLeftH:Remove()
-        esp.BottomRightV:Remove()
-        esp.BottomRightH:Remove()
-        esp.HealthBarOutline:Remove()
-        esp.HealthBarFill:Remove()
-        esp.HealthText:Remove()
-        esp.ToolText:Remove()
-        self.Objects[player] = nil
-    end
-end
-
--- Update ESP (modified to be a method)
-function ESP:Update()
-    if not self.Enabled then return end
-    
-    local camera = workspace.CurrentCamera
-    for player, esp in pairs(self.Objects) do
-        if esp and esp.Enabled and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            local character = player.Character
-            local hrp = character:FindFirstChild("HumanoidRootPart")
-            local humanoid = character:FindFirstChild("Humanoid")
-            
-            if hrp and humanoid and humanoid.Health > 0 then
-                local min, max = GetBoundingBox(character)
-                local rootPos = hrp.Position
-                
-                -- Get corners in world space
-                local corners = {
-                    Vector3.new(min.X, max.Y, min.Z), -- Top Front Left
-                    Vector3.new(max.X, max.Y, min.Z), -- Top Front Right
-                    Vector3.new(min.X, min.Y, min.Z), -- Bottom Front Left
-                    Vector3.new(max.X, min.Y, min.Z), -- Bottom Front Right
-                    Vector3.new(min.X, max.Y, max.Z), -- Top Back Left
-                    Vector3.new(max.X, max.Y, max.Z), -- Top Back Right
-                    Vector3.new(min.X, min.Y, max.Z), -- Bottom Back Left
-                    Vector3.new(max.X, min.Y, max.Z)  -- Bottom Back Right
-                }
-                
-                local minX, minY = math.huge, math.huge
-                local maxX, maxY = -math.huge, -math.huge
-                local allCornersBehind = true
-                
-                -- Project corners to screen
-                for _, corner in pairs(corners) do
-                    local screenPos, onScreen = camera:WorldToViewportPoint(corner)
-                    if screenPos.Z > 0 then -- Corner is in front of camera
-                        allCornersBehind = false
-                        minX = math.min(minX, screenPos.X)
-                        minY = math.min(minY, screenPos.Y)
-                        maxX = math.max(maxX, screenPos.X)
-                        maxY = math.max(maxY, screenPos.Y)
-                    end
-                end
-                
-                local distance = (rootPos - camera.CFrame.Position).Magnitude
-                local screenPos, onScreen = camera:WorldToViewportPoint(Vector3.new(
-                    (min.X + max.X) / 2,
-                    max.Y + 0.5,
-                    (min.Z + max.Z) / 2
-                ))
-                
-                if onScreen and not allCornersBehind and self.Enabled and distance <= self.MaxDistance then
-                    -- Calculate box dimensions
-                    local boxWidth = maxX - minX
-                    local boxHeight = maxY - minY
-                    
-                    -- Update box visibility based on style
-                    esp.Box.Size = Vector2.new(boxWidth, boxHeight)
-                    esp.Box.Position = Vector2.new(minX, minY)
-                    esp.Box.Visible = not self.CornerBoxEnabled
-                    
-                    if self.CornerBoxEnabled then
-                        -- Top Left Corner
-                        esp.TopLeftV.From = Vector2.new(minX, minY)
-                        esp.TopLeftV.To = Vector2.new(minX, minY + self.CornerSize)
-                        esp.TopLeftH.From = Vector2.new(minX, minY)
-                        esp.TopLeftH.To = Vector2.new(minX + self.CornerSize, minY)
-                        
-                        -- Top Right Corner
-                        esp.TopRightV.From = Vector2.new(maxX, minY)
-                        esp.TopRightV.To = Vector2.new(maxX, minY + self.CornerSize)
-                        esp.TopRightH.From = Vector2.new(maxX, minY)
-                        esp.TopRightH.To = Vector2.new(maxX - self.CornerSize, minY)
-                        
-                        -- Bottom Left Corner
-                        esp.BottomLeftV.From = Vector2.new(minX, maxY)
-                        esp.BottomLeftV.To = Vector2.new(minX, maxY - self.CornerSize)
-                        esp.BottomLeftH.From = Vector2.new(minX, maxY)
-                        esp.BottomLeftH.To = Vector2.new(minX + self.CornerSize, maxY)
-                        
-                        -- Bottom Right Corner
-                        esp.BottomRightV.From = Vector2.new(maxX, maxY)
-                        esp.BottomRightV.To = Vector2.new(maxX, maxY - self.CornerSize)
-                        esp.BottomRightH.From = Vector2.new(maxX, maxY)
-                        esp.BottomRightH.To = Vector2.new(maxX - self.CornerSize, maxY)
-                        
-                        -- Show corner lines
-                        for _, line in pairs({
-                            esp.TopLeftV, esp.TopLeftH,
-                            esp.TopRightV, esp.TopRightH,
-                            esp.BottomLeftV, esp.BottomLeftH,
-                            esp.BottomRightV, esp.BottomRightH
-                        }) do
-                            line.Visible = true
-                        end
-                    else
-                        -- Hide corner lines when not using corner box style
-                        for _, line in pairs({
-                            esp.TopLeftV, esp.TopLeftH,
-                            esp.TopRightV, esp.TopRightH,
-                            esp.BottomLeftV, esp.BottomLeftH,
-                            esp.BottomRightV, esp.BottomRightH
-                        }) do
-                            line.Visible = false
-                        end
-                    end
-                    
-                    -- Update health bar
-                    local healthPercent = humanoid.Health / humanoid.MaxHealth
-                    local healthBarHeight = boxHeight
-                    local healthBarPos = Vector2.new(minX - self.HealthBarWidth - self.HealthBarOffset, minY)
-                    
-                    esp.HealthBarOutline.Size = Vector2.new(self.HealthBarWidth, healthBarHeight)
-                    esp.HealthBarOutline.Position = healthBarPos
-                    esp.HealthBarOutline.Visible = true
-                    
-                    esp.HealthBarFill.Size = Vector2.new(self.HealthBarWidth, healthBarHeight * healthPercent)
-                    esp.HealthBarFill.Position = Vector2.new(healthBarPos.X, healthBarPos.Y + healthBarHeight * (1 - healthPercent))
-                    esp.HealthBarFill.Color = GetHealthColor(healthPercent)
-                    esp.HealthBarFill.Visible = true
-                    
-                    -- Update health text
-                    local healthText = string.format("%d", math.floor(humanoid.Health + 0.5))
-                    esp.HealthText.Text = healthText
-                    esp.HealthText.Position = Vector2.new(healthBarPos.X - esp.HealthText.TextBounds.X - 2, 
-                        healthBarPos.Y + healthBarHeight - esp.HealthText.TextBounds.Y)
-                    esp.HealthText.Visible = true
-                    
-                    -- Update tool text
-                    local toolName = GetEquippedTool(character)
-                    esp.ToolText.Text = toolName
-                    esp.ToolText.Position = Vector2.new((minX + maxX) / 2, maxY + 2)
-                    esp.ToolText.Visible = true
-                    
-                    -- Update name text
-                    esp.Name.Position = Vector2.new((minX + maxX) / 2, minY - esp.Name.TextBounds.Y - 2)
-                    esp.Name.Size = self.TextSize
-                    esp.Name.Text = player.Name
-                    if self.ShowDistance then
-                        esp.Name.Text = string.format("%s\n[%d studs]", player.Name, math.floor(distance))
-                    end
-                    esp.Name.Visible = true
-                else
-                    HideESP(esp)
-                end
-            else
-                HideESP(esp)
-            end
-        else
-            HideESP(esp)
-        end
     end
 end
 
