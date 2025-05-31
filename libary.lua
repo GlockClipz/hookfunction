@@ -471,7 +471,7 @@ if success then
     ESP.TextColor = Color3.fromRGB(255, 255, 255)  -- White text
     ESP.BoxThickness = 2
     ESP.TextSize = 14
-    ESP.Enabled = true
+    ESP.Enabled = false
     
     print("ESP initialized successfully!")
 else
