@@ -96,5 +96,5 @@ ESP.CornerSize         -- Corner box size (number)
 
 **Note:** All changes take effect immediately after calling the respective functions.
 
-```
+
 
