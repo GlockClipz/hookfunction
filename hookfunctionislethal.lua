@@ -450,4 +450,7 @@ function ESP:SetSize(size)
     self.TextSize = size
 end
 
+-- Initialize ESP immediately when loaded through loadstring
+ESP:Init()
+
 return ESP 
