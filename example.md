@@ -7,7 +7,6 @@ A lightweight, customizable ESP (Extra Sensory Perception) script for Roblox.
 
 ## 📥 Installation
 
-```lua
 local ESP = loadstring(game:HttpGet("https://raw.githubusercontent.com/GlockClipz/hookfunction/refs/heads/main/hookfunctionislethal.lua"))()
 ```
 
@@ -73,5 +72,3 @@ ESP.CornerSize      -- Corner box size (number)
 ---
 *Note: All changes take effect immediately after calling the respective functions.*
 ```
-
-This documentation provides a clean, organized overview of your ESP's features with proper GitHub-style markdown formatting, including emojis for better visual organization and code blocks for all commands.
