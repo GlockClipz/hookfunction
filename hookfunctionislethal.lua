@@ -507,79 +507,21 @@ function ESP:SetSize(size)
     self.TextSize = size
 end
 
--- ESP Loader
-local function LoadESP()
-    local success, ESP = pcall(function()
-        -- Your ESP URL
-        local espUrl = "https://raw.githubusercontent.com/GlockClipz/hookfunction/refs/heads/main/hookfunctionislethal.lua"
-        
-        -- Load and run the ESP
-        local espScript = game:HttpGet(espUrl)
-        local espFunction = loadstring(espScript)
-        
-        if espFunction then
-            local esp = espFunction()
-            
-            -- Force enable and initialize
-            esp.Enabled = true
-            esp.Started = false  -- Reset started state
-            esp:Init()  -- Initialize
-            
-            -- Create a simple GUI to control the ESP
-            local ScreenGui = Instance.new("ScreenGui")
-            local Frame = Instance.new("Frame")
-            local ToggleButton = Instance.new("TextButton")
-            
-            ScreenGui.Parent = game:GetService("CoreGui")
-            ScreenGui.ResetOnSpawn = false
-            
-            Frame.Size = UDim2.new(0, 100, 0, 30)
-            Frame.Position = UDim2.new(0, 10, 0.5, -15)
-            Frame.BackgroundTransparency = 0.5
-            Frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-            Frame.Parent = ScreenGui
-            
-            ToggleButton.Size = UDim2.new(1, 0, 1, 0)
-            ToggleButton.Text = "ESP: ON"
-            ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-            ToggleButton.BackgroundTransparency = 1
-            ToggleButton.Parent = Frame
-            
-            ToggleButton.MouseButton1Click:Connect(function()
-                esp:Toggle()
-                ToggleButton.Text = esp.Enabled and "ESP: ON" or "ESP: OFF"
-            end)
-            
-            -- Return ESP for further use
-            return esp
-        end
-    end)
+-- Initialize ESP
+ESP.Started = false
+local success = ESP:Init()
+
+if success then
+    -- Set default configuration
+    ESP.BoxColor = Color3.fromRGB(255, 0, 0)  -- Red color
+    ESP.TextColor = Color3.fromRGB(255, 255, 255)  -- White text
+    ESP.BoxThickness = 2
+    ESP.TextSize = 14
+    ESP.Enabled = true
     
-    if not success then
-        warn("Failed to load ESP:", ESP)
-        return nil
-    end
-    
-    return ESP
+    print("ESP initialized successfully!")
+else
+    warn("ESP failed to initialize!")
 end
 
--- Load the ESP
-local ESP = LoadESP()
-
--- Check if ESP loaded successfully
-if ESP then
-    print("ESP loaded successfully!")
-    
-    -- You can use these commands to control the ESP:
-    -- ESP:Toggle()  -- Toggle ESP on/off
-    -- ESP:ToggleCornerBox()  -- Toggle corner box style
-    -- ESP:SetColor(Color3.fromRGB(255, 0, 0))  -- Change color (e.g., to red)
-    -- ESP:SetSize(14)  -- Change text size
-    -- ESP:Stop()  -- Stop ESP completely
-end
-
--- Initialize ESP immediately when loaded through loadstring
-ESP:Init()
-
--- Return the ESP object
 return ESP 
